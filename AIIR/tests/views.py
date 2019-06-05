@@ -9,6 +9,8 @@ import json
 import datetime
 # Create your views here.
 
+CLASTERS = 2
+
 def index(request):
     
     fs = open(os.getcwd()+"/tests/views/plik.html","r+")
@@ -32,18 +34,35 @@ def create_new_task(request):
     if random is False:
         # dostajemy dane wejsciowe -> zapisujemy je do pliku -> uruchom klastrowanie
         data = response["data"]
+        tabu_length = response["tabu_length"]
+        iterations_without_improvement = response["iterations_without_improvement"]
+        filename = response["filename"]
+        iterations = response["iterations"]
+
+    
+
+
+        node_idx = 0
+        nodes = 2
+
     # w przeciwym wypadku wygeneruj dane -> zapisz do pliku -> wyslij 
-    # str
+    
     login = response["login"]
     print(response)
     # do usuniecia
     return HttpResponse([random, data, login]) 
 
 def nodeInfo(request):
+
+    
+
+    nodes = []
     response = {}
     response["id"] = 123
     response["status"] = 1
-    response = json.dumps(response)
+    nodes.append(response)
+
+    response = json.dumps(nodes)
     return HttpResponse(response)
 
 def input_data (request, input, taskId):

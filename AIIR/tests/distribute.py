@@ -2,6 +2,7 @@
 import os
 import paramiko
 import random
+import sys
 from colorama import Fore, Style
 from multiprocessing import Pool
 
@@ -11,6 +12,16 @@ import warnings
 warnings.filterwarnings(action='ignore', module='.*paramiko.*')
 ###########
 
+#PARAMS
+tabu_length = sys.argv[1]
+iterations_without_improvement = sys.argv[2]
+matrix_filename = sys.argv[3]
+result_filename = sys.argv[4]
+iterations = sys.argv[5]
+node_id = sys.argv[6]
+parts_of_matrix = sys.argv[7]
+#
+
 usernames = ["kacper"]
 hosts = ["10.182.29.234"]
 
@@ -18,7 +29,7 @@ colors = [Fore.RED, Fore.GREEN, Fore.YELLOW, Fore.BLUE,
           Fore.MAGENTA, Fore.CYAN]
 
 open_gedit_test = "gedit ~/test.txt"
-run_tabu = "~/aiir-workspace/main 200 300 ~/aiir-workspace/ftv47.atsp wynik.txt 5 13"
+run_tabu = "~/aiir-workspace/main" + tabu_length + " " + iterations_without_improvement + " ~/aiir-workspace/" + matrix_filename + " " + result_filename + " " + iterations + " " + node_id + " " + parts_of_matrix
 give_credits = "chmod a+x ~/aiir-workspace/*"
 compile_cpp = "gcc -w main.cpp -lstdc++ -o main"
 mk_workspace = "mkdir aiir-workspace"
