@@ -20,22 +20,29 @@ result_filename = sys.argv[4]
 iterations = sys.argv[5]
 node_id = sys.argv[6]
 parts_of_matrix = sys.argv[7]
+task_id = sys.argv[8]
 #
 
-usernames = ["kacper"]
-hosts = ["10.182.29.234"]
+usernames = ["kacper", "witoldini"]
+hosts = ["10.182.29.234", "10.182.62.254"]
 
 colors = [Fore.RED, Fore.GREEN, Fore.YELLOW, Fore.BLUE,
           Fore.MAGENTA, Fore.CYAN]
 
+def get_cmd_run_tabu():
+  return "main" + tabu_length + " " + iterations_without_improvement + " ~/aiir-workspace/" + matrix_filename + " " + result_filename + " " + iterations + " " + node_id + " " + parts_of_matrix
+
 open_gedit_test = "gedit ~/test.txt"
-run_tabu = "~/aiir-workspace/main" + tabu_length + " " + iterations_without_improvement + " ~/aiir-workspace/" + matrix_filename + " " + result_filename + " " + iterations + " " + node_id + " " + parts_of_matrix
+run_tabu = "~/aiir-workspace/" + get_cmd_run_tabu()
 give_credits = "chmod a+x ~/aiir-workspace/*"
 compile_cpp = "gcc -w main.cpp -lstdc++ -o main"
 mk_workspace = "mkdir aiir-workspace"
 ls = "ls ~/wynik.txt"
+rm_data_dir = "rm -r ~/aiir-workspace"
+rm_wynik = "rm ~/" + result_filename
 
 prefix = "########## "
+
 
 def get_username_for_host(host):
   i = 0
@@ -50,8 +57,8 @@ def connect_to_host(host):
   client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
   client.connect('%s' % host, username=get_username_for_host(host),key_filename="/home/michal/.ssh/id_rsa")
 
-  _execute_on_remote(client, mk_workspace,random.choice(colors))
-  _copy_files(client, host, random.choice(colors), "ftv47.atsp")
+  _execute_on_remote(client, mk_workspace, random.choice(colors))
+  _copy_files(client, host, random.choice(colors), matrix_filename)
   _copy_files(client, host, random.choice(colors), "main")
   _execute_on_remote(client, give_credits, random.choice(colors))
   _execute_on_remote(client, run_tabu, random.choice(colors))
@@ -60,8 +67,9 @@ def connect_to_host(host):
     if _execute_on_remote(client, ls, random.choice(colors)):
       break
   print("========================================")
-  _copy_files_from_remote(client, host, random.choice(colors), "wynik.txt")
-  
+  _copy_files_from_remote(client, host, random.choice(colors), result_filename)
+  _execute_on_remote(client, rm_data_dir, random.choice(colors))
+  _execute_on_remote(client, rm_wynik, random.choice(colors))
   client.close()
 
 
@@ -70,7 +78,7 @@ def _copy_files(client, host, color, filename):
   sftp = client.open_sftp()
   print(get_username_for_host(host))
 
-  filename_from = os.getcwd() + "/data/" + filename
+  filename_from = os.getcwd() + "/tests/data/" + filename
   filename_to = "/home/" + get_username_for_host(host) +  "/aiir-workspace/" + filename
   print(filename_to)
   sftp.put(filename_from, filename_to)
@@ -84,7 +92,7 @@ def _copy_files_from_remote(client, host, color, filename):
 
   filename_from = "/home/" + get_username_for_host(host) + "/" + filename
   print(filename_from)
-  filename_to = os.getcwd() + "/data/" + filename
+  filename_to = os.getcwd() + "/data/results/" + node_id + "_" + task_id + " " + get_username_for_host(host) + "_" + result_filename
   sftp.get(filename_from, filename_to)
   sftp.close()
   print(color + prefix + "copying to :" + host + "done" + Style.RESET_ALL)
@@ -98,6 +106,5 @@ def _execute_on_remote(client, bash, color):
 
 
 if __name__ == '__main__':
-#  save_docker_to_file()
   with Pool(processes=len(hosts)) as pool:
     pool.map(connect_to_host, hosts)

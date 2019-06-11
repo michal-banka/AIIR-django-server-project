@@ -27,7 +27,7 @@ DEBUG = True
 
 CORS_ORIGIN_ALLOW_ALL = DEBUG
 
-ALLOWED_HOSTS = ["10.182.36.207", "localhost"]
+ALLOWED_HOSTS = ["10.182.36.207", "localhost", "10.182.203.244", "192.168.43.168", "0.0.0.0"]
 
 
 # Application definition
