@@ -30,6 +30,7 @@ class Task(models.Model):
     score = models.IntegerField(null=True, default=0)
     Student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True)
     File = models.ForeignKey(File, on_delete=models.CASCADE, null=True)
+    result_file = models.ForeignKey("File", on_delete=models.CASCADE, null=True, related_name="result_file")
 
     def __str__(self):
         return str(self.id) + " " + str(self.progress) + " " + str(self.tabu_length) + " " + str(self.iterations_without_improvement) + " " + str(self.iterations_of_tabu) + " " + str(self.start_date) + " " + str(self.score) + " " + str(self.Student) + " " + str(self.File)

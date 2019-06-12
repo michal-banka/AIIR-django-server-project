@@ -16,6 +16,8 @@ hosts = ["10.182.29.234", "10.182.62.254"]
 
 
 def index(request):
+
+    Task.objects.all().delete()
     response = request.body
     response = json.loads(response)
 
@@ -37,12 +39,14 @@ def index(request):
                        iterations_without_improvement, student, file_)
     task = db_insert_task(task)
 
+    # data = serializers.serialize('json', task)
+    return HttpResponse(task, content_type="application/json")
+
 
 def nowa(request):
 
     a = Student.objects.filter(id=1)
     serialised = serializers.serialize('json', a)
-
     return HttpResponse(a)
 
 
@@ -74,15 +78,12 @@ def create_new_task(request):
             "python3 /home/michal/Workspace/AIIR/AIIR/tests/distribute_single.py" + args)
 
 
-
-
 def nodeInfo(request):
     # tasks = Task.objects.filter(~Q(progress=100))
     # for task in tasks:
     #     print(task)
     #     exists = os.path.isfile('/home/michal/Workspace/AIIR/AIIR/tests/data/results/')
 
-    
     # regex = re.compile("^")
     # nodes = []
     # response = {}
@@ -94,34 +95,60 @@ def nodeInfo(request):
     return HttpResponse("Keep out")
 
 
-def input_data(request, input, taskId):
-    task = Task.objects.filter(id=taskId).first()
-    
-    f = open("/home/michal/Workspace/AIIR/AIIR/tests/data/matrices/" + task.File.filename + ".txt", "r")
+def input_data(request, login, taskId):
+    student = Student.objects.filter(login=login).first()
+    task = Task.objects.filter(id=taskId, Student=student).first()
+
     response = {}
-    response['data'] = f
-    response = json.dumps(response)
+    if task is not None:
+        f = open("/home/michal/Workspace/AIIR/AIIR/tests/data/matrices/" +
+                task.File.filename, "r")
+        response['data'] = f.read()
+        response = json.dumps(response)
     return HttpResponse(response)
 
 
-def output_data(request, input, taskId):
+def output_data(request, login, taskId):
+    update_tasks()
+    student = Student.objects.filter(login=login).first()
+    task = Task.objects.filter(id=taskId, Student=student).first()
     response = {}
-    response['data'] = "test_output_data"
+    finished = task.progress is 100
+    if finished:
+        f = open("/home/michal/Workspace/AIIR/AIIR/tests/data/results/" +
+                 task.result_file.filename, "r")
+        response['data'] = f.read()
+    else:
+        response['data'] = "not finished task"
+
     response = json.dumps(response)
     return HttpResponse(response)
 
 
 def tasks(request, login):
-    response = Task.objects.all()
+    update_tasks()
+    response = {}
+    response_tasks = []
+    tasks = Task.objects.all()
+    for task in tasks:
+        if task.Student.login is login:
+            response_task = {}
+            response_task['id'] = task.id
+            response_task["status"] = 3
+            response_task["tabuLength"] = task.tabu_length
+            response_task["iterationsWithoutImprovement"] = task.iterations_without_improvement
+            response_task["iterationsOfTabu"] = task.iterations_of_tabu
+            response_tasks.append(response_task)
+    response["tasks"] = response_tasks
     response = serializers.serialize('json', response)
     return HttpResponse(response, content_type='application/json')
 
 
 # NON CONTROLLER FUNCTIONS
 def save_data_to_file(data):
-    filename = uuid.uuid4()
+    filename = str(uuid.uuid4()) + ".txt"
     f = open("/home/michal/Workspace/AIIR/AIIR/tests/data/matrices/" +
-             str(filename)+".txt", "w+")
+             str(filename), "w+")
     f.write(data)
     f.close()
     return filename
@@ -152,6 +179,43 @@ def create_task(tabu_length, iterations_of_tabu, iterations_without_improvement,
 def create_data():
     return 0
 
+
+def update_tasks():
+    tasks = Task.objects.all()
+    results = os.popen(
+        "ls /home/michal/Workspace/AIIR/AIIR/tests/data/results/*").read().split()
+    for task in tasks:
+        r = re.compile("^"+task.id+"_")
+        results_task = r.match(results)
+
+        task.progress = int(
+            float(float(len(results_task))/float(len(hosts)))*100)
+
+        if task.progress is 100:
+            min_ = 9999999.0
+            min_result = None
+            for result in results_task:
+                f = open(
+                    "/home/michal/Workspace/AIIR/AIIR/tests/data/results/" + result, "r")
+                words = f.read().split()
+                if (min_ > words[1]):
+                    min_ = words[1]
+                    min_result = result
+            os.system("mv /home/michal/Workspace/AIIR/AIIR/tests/data/results/" + result,
+                      "/home/michal/Workspace/AIIR/AIIR/tests/data/results/" + task.id + "_final.txt")
+            os.system(
+                "rm -rf /home/michal/Workspace/AIIR/AIIR/tests/data/results/" + task.id + "_*")
+            result_file = File()
+            result_file.filename = task.id + "_final.txt"
+            result_file.save()
+            task.result_file = result_file
+            task.score = min_
+        task.save() 
+
+
+def find_best_result(files):
+    return 0
+
 # DATABASE FUNCTIONS
 
     # File
@@ -173,6 +237,8 @@ def db_select_student(select_login):
 
 
 def db_insert_student(insert_login):
+    exist = Student.objects.filter(login=insert_login).get_first()
+
     student = Student(login=insert_login)
     student.login = insert_login
     student.save()
