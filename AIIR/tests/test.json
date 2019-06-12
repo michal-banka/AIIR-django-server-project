@@ -1,0 +1,20 @@
+random = response["random"]
+    # str
+    if random is False:
+        # fs = open(os.getcwd() + "/tests/views/plik.html", "r+")
+        os.system("./dist_test.py")
+        # dostajemy dane wejsciowe -> zapisujemy je do pliku -> uruchom klastrowanie
+        data = response["data"]
+        tabu_length = response["tabu_length"]
+        iterations_without_improvement = response["iterations_without_improvement"]
+        filename = response["filename"]
+        iterations = response["iterations"]
+
+        {
+            "random": false,
+            "data": "aaaa",
+            "tabu_length": 123,
+            "iterations_without_improvement": 10,
+            "filename": "filename",
+            "iterations": 10
+        }
